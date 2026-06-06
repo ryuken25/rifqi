@@ -11,9 +11,16 @@ import path from 'node:path';
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const CDN = 'https://cdn.cloudflare.steamstatic.com';
 
-const HEROES = [
-  'storm_spirit', 'invoker', 'crystal_maiden', 'juggernaut',
-  'phantom_assassin', 'lina', 'zuus', 'faceless_void',
+// Hero splash art still used (refleksi card icons). Storm Spirit also fuels the hero header theme.
+const HEROES = ['storm_spirit', 'crystal_maiden', 'lina'];
+
+// Chibi Dota chat emoticons (animated transparent GIFs) — scattered as reactive accents.
+const EMOTE_RAW = 'https://raw.githubusercontent.com/bontscho/dota2-chat-emoticons/master/assets/images';
+const EMOTES = [
+  'monkey_king_ti6_charm', 'charm_smile', 'charm_wink', 'charm_highfive', 'charm_cheeky',
+  'charm_cool', 'charm_onlooker', 'charm_happytears', 'luna_love', 'arcane_rune', 'blink',
+  'gem', 'stars', 'highfive', 'thumbs_up', 'goodjob', 'donkey', 'gg', 'ggradiant',
+  'thinking', 'nerd', 'aegis_2017', 'heart',
 ];
 
 // internal item names (from dotaconstants build/items.json keys)
@@ -91,10 +98,9 @@ async function main() {
     (await save(CDN + h.img, `assets/dota/heroes/${name}.png`)) ? ok++ : (fail++, failures.push('hero:' + name));
   }
 
-  // 3. Hero attribute icons
-  for (const attr of ['strength', 'agility', 'intelligence', 'universal']) {
-    const url = `${CDN}/apps/dota2/images/dota_react/icons/hero_${attr}.png`;
-    (await save(url, `assets/dota/icons/hero_${attr}.png`)) ? ok++ : (fail++, failures.push('icon:' + attr));
+  // 3. Chibi emotes (animated transparent GIFs)
+  for (const name of EMOTES) {
+    (await save(`${EMOTE_RAW}/${name}.gif`, `assets/dota/emotes/${name}.gif`)) ? ok++ : (fail++, failures.push('emote:' + name));
   }
 
   // 4. Item icons — resolve img via dotaconstants items.json

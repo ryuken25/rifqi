@@ -225,6 +225,78 @@ test.describe("interactions", () => {
   });
 });
 
+test.describe("emotes", () => {
+  test("old 8-bit gallery is fully removed (index)", async ({ page }) => {
+    await page.goto("index.html", { waitUntil: "load" });
+    await expect(page.locator(".hero-gallery")).toHaveCount(0);
+    await expect(page.locator(".hero-card")).toHaveCount(0);
+    await expect(page.getByText(/Galeri 8-?Bit|8-?Bit Heroes/i)).toHaveCount(0);
+  });
+
+  for (const p of PAGES) {
+    test(`emotes self-hosted, loaded & spread (${p.path})`, async ({ page }) => {
+      await page.goto(p.path, { waitUntil: "load" });
+      await loadAllImages(page);
+
+      const info = await page.evaluate(() => {
+        const els = Array.from(document.querySelectorAll("img.emote")) as HTMLImageElement[];
+        return {
+          count: els.length,
+          notLocal: els.map((e) => e.getAttribute("src") || "").filter((s) => !s.startsWith("assets/")),
+          broken: els.filter((e) => !(e.naturalWidth > 0)).map((e) => e.src),
+        };
+      });
+
+      expect(info.count, "emote count").toBeGreaterThanOrEqual(12);
+      expect(info.notLocal, `non-local emote src: ${info.notLocal.join(", ")}`).toEqual([]);
+      expect(info.broken, `broken emotes: ${info.broken.join(", ")}`).toEqual([]);
+    });
+  }
+
+  test("emotes present in each major section", async ({ page }) => {
+    await page.goto("index.html", { waitUntil: "load" });
+    for (const sel of [".hero", "#profil", "#kontak", "#sekolah", "footer.footer"]) {
+      await expect(page.locator(`${sel} img.emote`).first(), sel).toHaveCount(1);
+    }
+    await page.goto("artefak.html", { waitUntil: "load" });
+    for (const sel of ["#siklus-1", "#siklus-2", "#siklus-3", "footer.footer"]) {
+      await expect(page.locator(`${sel} img.emote`).first(), sel).toHaveCount(1);
+    }
+    await page.goto("refleksi.html", { waitUntil: "load" });
+    const cards = page.locator(".refl-card img.emote");
+    expect(await cards.count()).toBeGreaterThanOrEqual(3);
+    await expect(page.locator(".talent img.emote").first()).toHaveCount(1);
+    await expect(page.locator("footer.footer img.emote").first()).toHaveCount(1);
+  });
+
+  test("mascot reacts on click (changes face + bubble)", async ({ page }) => {
+    await page.goto("index.html", { waitUntil: "load" });
+    const mascot = page.locator("#mascot");
+    const img = page.locator("#mascotImg");
+    await expect(mascot).toBeVisible();
+    const before = await img.getAttribute("src");
+    await mascot.click();
+    await expect(page.locator(".mascot.is-talking")).toBeVisible();
+    await expect(page.locator("#mascotBubble")).not.toBeEmpty();
+    await expect(img).not.toHaveAttribute("src", before || "");
+    // close button hides the mascot
+    await page.locator(".mascot__close").click();
+    await expect(page.locator(".mascot.is-hidden")).toHaveCount(1);
+  });
+
+  test("peek emotes reveal on scroll", async ({ page }) => {
+    await page.goto("index.html", { waitUntil: "load" });
+    await page.evaluate(async () => {
+      for (let y = 0; y < document.body.scrollHeight; y += 200) {
+        window.scrollTo(0, y);
+        await new Promise((r) => setTimeout(r, 90));
+      }
+    });
+    const inCount = await page.locator(".emote--peek.is-in").count();
+    expect(inCount).toBeGreaterThan(0);
+  });
+});
+
 test.describe("visual", () => {
   test("capture screenshots", async ({ page }) => {
     for (const p of PAGES) {

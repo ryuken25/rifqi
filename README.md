@@ -10,7 +10,7 @@ Situs e-portofolio statis bertema **Dota 2** untuk **Rifqi Fausta Dianta**
 ## Teknologi
 - HTML + CSS + JavaScript murni (tanpa bundler, tanpa backend).
 - Semua aset (hero & item Dota, foto, font) **di-host sendiri** di `assets/` — tidak ada hotlink CDN saat runtime.
-- Efek kanvas "Ball Lightning" Storm Spirit, galeri hero 8-bit (`image-rendering: pixelated`), aksen ikon item.
+- Efek kanvas "Ball Lightning" Storm Spirit + **emote chibi Dota animasi** (GIF transparan, di-render `image-rendering: pixelated` → look "8-bit lucu") yang disebar sebagai aksen reaktif (peek-in saat scroll, pop saat hover), plus **maskot interaktif** (ganti ekspresi + easter egg).
 - Mobile-first, responsif 360px → 1920px, menghormati `prefers-reduced-motion`.
 
 ## Struktur
