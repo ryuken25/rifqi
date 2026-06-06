@@ -1,0 +1,14 @@
+{
+  "name": "rifqi-eportfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dota 2 themed e-portfolio — Rifqi Fausta Dianta (PPG)",
+  "scripts": {
+    "fetch": "node scripts/fetch_assets.mjs",
+    "serve": "npx --yes serve -l 3000 .",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
