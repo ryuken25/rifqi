@@ -44,9 +44,21 @@ body {
   color: var(--text);
   background: var(--bg);
   line-height: 1.65;
-  overflow-x: hidden;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Dota-style custom cursors (clean, transparent) ----------
+   Default = gold arrow; interactive = glowing green arrow.
+   Keyword fallbacks (auto/pointer) keep things sane if a browser
+   ignores SVG cursors. */
+html, body {
+  cursor: url("../cursor/cursor.svg") 3 2, auto;
+}
+a, button, summary, label, select, [role="button"], [tabindex]:not([tabindex="-1"]),
+.emote--tap, .mascot, .siklus-head, .siklus-tab, .rc-trigger, .contact-btn,
+.gallery figure, [data-lightbox], .embed .ph, .lb-close, .dota-close, .btn, .nav-toggle {
+  cursor: url("../cursor/cursor-green.svg") 3 2, pointer;
 }
 
 /* persistent atmospheric background */
@@ -241,6 +253,13 @@ p { margin: 0 0 1em; overflow-wrap: anywhere; }
   display: grid; place-items: center; overflow: hidden;
 }
 .feat-list .ico img { width: 100%; height: 100%; object-fit: cover; }
+/* animated effect-gif bullet icons (chibi Dota) */
+.feat-list .ico img.fx-ico {
+  object-fit: contain; padding: 2px;
+  image-rendering: pixelated; image-rendering: crisp-edges;
+}
+.feat-list li:hover .ico { border-color: var(--gold); box-shadow: 0 0 12px rgba(200,170,110,.3); }
+.feat-list .ico { transition: border-color 0.2s, box-shadow 0.25s; }
 
 /* ============================================================
    HERO HEADER
@@ -421,18 +440,42 @@ p { margin: 0 0 1em; overflow-wrap: anywhere; }
   font-family: var(--font-display); letter-spacing: 1.5px; font-size: 0.72rem; color: var(--gold-bright);
 }
 
-/* lightbox */
-.lightbox {
+/* lightbox + media preview modal */
+.lightbox, .media-modal {
   position: fixed; inset: 0; z-index: 300; display: none;
   background: rgba(5, 7, 10, 0.92); backdrop-filter: blur(6px);
   align-items: center; justify-content: center; padding: 20px;
 }
-.lightbox.open { display: flex; }
+.lightbox.open, .media-modal.open { display: flex; }
 .lightbox img { max-width: 92vw; max-height: 86vh; border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: var(--shadow); }
-.lightbox .lb-close {
-  position: absolute; top: 16px; right: 16px; width: 46px; height: 46px;
-  border-radius: 10px; border: 1px solid var(--line-strong); background: rgba(20, 26, 34, 0.8);
-  color: var(--gold-bright); font-size: 1.4rem; cursor: pointer; line-height: 1;
+
+/* preview-zoom entrance */
+.lightbox img, .media-modal .mm-frame { animation: previewPop 0.28s var(--ease); }
+@keyframes previewPop { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+/* video preview frame (16:9, responsive) */
+.media-modal .mm-frame {
+  position: relative; width: min(92vw, 1100px); aspect-ratio: 16 / 9;
+  background: #05070a; border: 1px solid var(--gold); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(200,170,110,.25), 0 30px 70px -25px rgba(0,0,0,.9);
+}
+.media-modal .mm-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+/* Dota-style close button (gold hex frame, dire-red glow on hover) */
+.dota-close {
+  position: absolute; top: 18px; right: 18px; width: 50px; height: 50px; padding: 0;
+  display: grid; place-items: center; z-index: 5; line-height: 0;
+  color: var(--gold-bright); background: radial-gradient(circle at 35% 30%, #2a323f, #11161d);
+  border: 2px solid var(--gold);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  box-shadow: 0 0 14px rgba(200, 170, 110, 0.5), inset 0 0 10px rgba(0,0,0,.6);
+  transition: transform 0.18s var(--ease), box-shadow 0.25s, color 0.2s, border-color 0.2s;
+}
+.dota-close svg { width: 22px; height: 22px; }
+.dota-close:hover, .dota-close:focus-visible {
+  transform: rotate(90deg) scale(1.08); outline: none;
+  color: #fff; border-color: var(--dire);
+  box-shadow: 0 0 20px rgba(192, 57, 43, 0.85), inset 0 0 12px rgba(0,0,0,.6);
 }
 
 /* ============================================================
@@ -480,7 +523,31 @@ p { margin: 0 0 1em; overflow-wrap: anywhere; }
 .siklus-body > div { overflow: hidden; }
 .siklus-inner { padding: 22px 4px 6px; display: grid; gap: 20px; }
 
-.block-title { font-family: var(--font-display); color: var(--gold-bright); font-size: 1.02rem; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+.block-title { font-family: var(--font-display); color: var(--gold-bright); font-size: 1.02rem; margin: 0 0 10px; display: flex; align-items: center; gap: 9px; }
+
+/* ---------- HUD glyph icons (replace flat emoji) ---------- */
+.hicon {
+  display: inline-block; width: 1.25em; height: 1.25em; flex: 0 0 auto;
+  vertical-align: -0.22em; background: var(--gold-bright);
+  -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat;
+  transition: transform 0.2s var(--ease), filter 0.2s;
+  filter: drop-shadow(0 0 4px rgba(200, 170, 110, 0.35));
+}
+.block-title:hover .hicon, .siklus-head:hover .hicon, .eyebrow:hover .hicon { transform: scale(1.15) rotate(-4deg); }
+.hicon--target { -webkit-mask-image: url("../icons/target.svg"); mask-image: url("../icons/target.svg"); }
+.hicon--check  { -webkit-mask-image: url("../icons/check.svg");  mask-image: url("../icons/check.svg");  background: var(--radiant-bright); filter: drop-shadow(0 0 5px rgba(166,226,46,.45)); }
+.hicon--warn   { -webkit-mask-image: url("../icons/warn.svg");   mask-image: url("../icons/warn.svg");   background: #e0654f; filter: drop-shadow(0 0 5px rgba(192,57,43,.5)); }
+.hicon--book   { -webkit-mask-image: url("../icons/book.svg");   mask-image: url("../icons/book.svg");   background: #9b86ff; filter: drop-shadow(0 0 5px rgba(123,92,255,.45)); }
+.hicon--film   { -webkit-mask-image: url("../icons/film.svg");   mask-image: url("../icons/film.svg");   background: var(--mana); filter: drop-shadow(0 0 5px rgba(58,160,255,.45)); }
+.hicon--doc    { -webkit-mask-image: url("../icons/doc.svg");    mask-image: url("../icons/doc.svg"); }
+.hicon--scroll { -webkit-mask-image: url("../icons/scroll.svg"); mask-image: url("../icons/scroll.svg"); }
+.hicon--bulb   { -webkit-mask-image: url("../icons/bulb.svg");   mask-image: url("../icons/bulb.svg"); }
+.hicon--chat   { -webkit-mask-image: url("../icons/chat.svg");   mask-image: url("../icons/chat.svg"); }
+.hicon--trophy { -webkit-mask-image: url("../icons/trophy.svg"); mask-image: url("../icons/trophy.svg"); }
+.hicon--rocket { -webkit-mask-image: url("../icons/rocket.svg"); mask-image: url("../icons/rocket.svg"); background: var(--mana); filter: drop-shadow(0 0 5px rgba(58,160,255,.45)); }
+/* sizing in headings/eyebrows */
+.eyebrow .hicon { width: 1.15em; height: 1.15em; }
+.siklus-head .hicon { width: 1.3em; height: 1.3em; }
 .pro-con { display: grid; gap: 16px; grid-template-columns: 1fr; }
 @media (min-width: 860px) { .pro-con { grid-template-columns: 1fr 1fr; } }
 .pc-card { border-radius: var(--radius); padding: 18px 20px; border: 1px solid var(--line); }
@@ -594,15 +661,19 @@ p { margin: 0 0 1em; overflow-wrap: anywhere; }
    ============================================================ */
 @media (max-width: 860px) {
   .nav-toggle { display: inline-flex; }
+  /* dropdown panel anchored under the sticky navbar — never positioned
+     off-screen, so it can't create horizontal overflow and the navbar
+     stays sticky (no body/overflow hacks needed). */
   .nav-links {
-    position: fixed; top: var(--nav-h); right: 0; bottom: 0; width: min(80vw, 320px);
+    position: absolute; top: 100%; left: 0; right: 0;
     flex-direction: column; align-items: stretch; gap: 6px;
     background: linear-gradient(180deg, var(--bg-2), var(--bg));
-    border-left: 1px solid var(--line); padding: 18px;
-    transform: translateX(105%); transition: transform 0.32s var(--ease);
-    z-index: 110;
+    border-bottom: 1px solid var(--line); padding: 14px 18px;
+    transform: translateY(-12px); opacity: 0; visibility: hidden;
+    transition: transform 0.28s var(--ease), opacity 0.28s, visibility 0.28s;
+    box-shadow: var(--shadow); z-index: 110;
   }
-  .nav.open .nav-links { transform: translateX(0); }
+  .nav.open .nav-links { transform: translateY(0); opacity: 1; visibility: visible; }
   .nav-links a { padding: 14px 16px; font-size: 1rem; border-radius: 10px; }
   .nav-links a.active::after { display: none; }
   .nav-links a.active { background: rgba(200, 170, 110, 0.12); }
@@ -612,4 +683,11 @@ p { margin: 0 0 1em; overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
   .reveal { opacity: 1; transform: none; }
+}
+
+/* Custom green cursor declared last so it wins over component `cursor: pointer` */
+a, button, summary, label, select, [role="button"], [tabindex]:not([tabindex="-1"]),
+.emote--tap, .mascot, .siklus-head, .siklus-tab, .rc-trigger, .contact-btn,
+.gallery figure, [data-lightbox], .embed .ph, .lb-close, .dota-close, .btn, .nav-toggle {
+  cursor: url("../cursor/cursor-green.svg") 3 2, pointer;
 }

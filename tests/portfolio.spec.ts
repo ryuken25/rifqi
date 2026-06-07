@@ -142,6 +142,16 @@ test.describe("navigation", () => {
     await expect(page.locator(".nav-links a.active")).toHaveText(/Refleksi/);
   });
 
+  test("navbar stays sticky on scroll", async ({ page }) => {
+    await page.goto("artefak.html", { waitUntil: "load" });
+    await page.evaluate(() => window.scrollTo(0, 1400));
+    await page.waitForTimeout(200);
+    const top = await page.locator(".nav").evaluate((el) => el.getBoundingClientRect().top);
+    expect(Math.abs(top), `nav top after scroll = ${top}`).toBeLessThanOrEqual(1);
+    const navY = await page.evaluate(() => window.scrollY);
+    expect(navY).toBeGreaterThan(500); // we actually scrolled
+  });
+
   test("mobile hamburger opens and closes", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("index.html", { waitUntil: "load" });
@@ -189,13 +199,18 @@ test.describe("interactions", () => {
     );
     for (const e of expected) expect(srcs).toContain(e);
 
-    // clicking a facade actually injects a real iframe with that src
+    // clicking a facade opens the preview modal with the correct iframe src
     const first = page.locator("#siklus-1 .embed").first();
     await first.locator(".ph").click();
-    await expect(first.locator("iframe")).toHaveAttribute(
+    await expect(page.locator(".media-modal.open")).toBeVisible();
+    await expect(page.locator(".media-modal iframe")).toHaveAttribute(
       "src",
       "https://www.youtube.com/embed/-3XixSO98yU"
     );
+    // Dota-style close button dismisses it and stops playback
+    await page.locator(".media-modal .dota-close").click();
+    await expect(page.locator(".media-modal.open")).toHaveCount(0);
+    await expect(page.locator(".media-modal iframe")).toHaveCount(0);
   });
 
   test("reflection cards expand (refleksi)", async ({ page }) => {
@@ -294,6 +309,42 @@ test.describe("emotes", () => {
     });
     const inCount = await page.locator(".emote--peek.is-in").count();
     expect(inCount).toBeGreaterThan(0);
+  });
+});
+
+test.describe("polish", () => {
+  test("cheap emoji replaced by HUD icons (artefak)", async ({ page }) => {
+    await page.goto("artefak.html", { waitUntil: "load" });
+    // HUD mask-icons present
+    expect(await page.locator(".hicon").count()).toBeGreaterThanOrEqual(18);
+    // the flat target/check/warn/book/film/doc emoji are gone from the body text
+    const body = await page.locator("body").innerText();
+    for (const e of ["🎯", "✅", "⚠️", "📚", "🎥", "📄"]) {
+      expect(body.includes(e), `emoji ${e} should be gone`).toBeFalsy();
+    }
+  });
+
+  test("cursor + icon assets resolve (no 404)", async ({ page }) => {
+    const base = new URL("./", BASE).toString();
+    for (const rel of [
+      "assets/cursor/cursor.svg",
+      "assets/cursor/cursor-green.svg",
+      "assets/icons/target.svg",
+      "assets/icons/check.svg",
+      "assets/icons/rocket.svg",
+    ]) {
+      const res = await page.request.get(base + rel);
+      expect(res.status(), rel).toBe(200);
+    }
+  });
+
+  test("reflection bullets use animated effect gifs (refleksi)", async ({ page }) => {
+    await page.goto("refleksi.html", { waitUntil: "load" });
+    const srcs = await page.locator(".feat-list .ico img").evaluateAll((els) =>
+      els.map((e) => e.getAttribute("src") || "")
+    );
+    expect(srcs.length).toBeGreaterThanOrEqual(9);
+    for (const s of srcs) expect(s.endsWith(".gif"), s).toBeTruthy();
   });
 });
 

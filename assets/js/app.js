@@ -45,54 +45,93 @@
     });
   });
 
-  /* ---------- lazy iframe embeds (click-to-load facade) ----------
-     We do NOT auto-load third-party iframes: they only load on user
-     intent. This keeps page load fast and free of third-party noise.
-     The real src lives in data-src and is injected on click. */
-  document.querySelectorAll(".embed[data-src]").forEach(function (box) {
-    var load = function () {
-      if (box.dataset.loaded) return;
-      box.dataset.loaded = "1";
+  /* ---------- Dota-style X close button markup ---------- */
+  var X_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg>';
+
+  /* ---------- image lightbox (preview/zoom) ---------- */
+  var lb = document.querySelector(".lightbox");
+  if (!lb) {
+    lb = document.createElement("div");
+    lb.className = "lightbox";
+    lb.setAttribute("role", "dialog");
+    lb.setAttribute("aria-label", "Pratinjau gambar");
+    lb.setAttribute("aria-hidden", "true");
+    lb.innerHTML = '<button class="dota-close lb-close" type="button" aria-label="Tutup">' + X_SVG + '</button>' +
+      '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" />';
+    document.body.appendChild(lb);
+  } else {
+    // upgrade an existing static close button to the Dota style
+    var oldClose = lb.querySelector(".lb-close");
+    if (oldClose) { oldClose.classList.add("dota-close"); oldClose.innerHTML = X_SVG; }
+  }
+  var lbImg = lb.querySelector("img");
+  var openLb = function (src, alt) {
+    lbImg.src = src; lbImg.alt = alt || "";
+    lb.classList.add("open"); lb.setAttribute("aria-hidden", "false");
+  };
+  var closeLb = function () { lb.classList.remove("open"); lb.setAttribute("aria-hidden", "true"); };
+  document.querySelectorAll("[data-lightbox]").forEach(function (el) {
+    el.addEventListener("click", function () {
+      var img = el.querySelector("img") || el;
+      openLb(img.getAttribute("src") || el.getAttribute("data-lightbox"), img.getAttribute("alt"));
+    });
+  });
+  lb.addEventListener("click", function (e) {
+    if (e.target === lb || e.target.closest(".lb-close")) closeLb();
+  });
+
+  /* ---------- video/doc preview modal ----------
+     Clicking an embed facade opens the media in a centered preview
+     overlay (like the image lightbox) with a Dota-style X. Iframes
+     load only on click and are torn down on close (stops playback). */
+  var embeds = document.querySelectorAll(".embed[data-src]");
+  var mm = null;
+  if (embeds.length) {
+    mm = document.createElement("div");
+    mm.className = "media-modal";
+    mm.setAttribute("role", "dialog");
+    mm.setAttribute("aria-label", "Pemutar media");
+    mm.setAttribute("aria-hidden", "true");
+    mm.innerHTML = '<button class="dota-close mm-close" type="button" aria-label="Tutup">' + X_SVG + '</button><div class="mm-frame"></div>';
+    document.body.appendChild(mm);
+    var mmFrame = mm.querySelector(".mm-frame");
+
+    var openMedia = function (src, title) {
+      mmFrame.innerHTML = "";
       var iframe = document.createElement("iframe");
-      iframe.src = box.getAttribute("data-src");
-      iframe.loading = "lazy";
+      iframe.src = src;
       iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
       iframe.referrerPolicy = "strict-origin-when-cross-origin";
       iframe.allowFullscreen = true;
-      iframe.title = box.getAttribute("data-title") || "Embedded media";
-      var ph = box.querySelector(".ph");
-      if (ph) ph.remove();
-      box.appendChild(iframe);
+      iframe.title = title || "Embedded media";
+      mmFrame.appendChild(iframe);
+      mm.classList.add("open"); mm.setAttribute("aria-hidden", "false");
     };
-    var ph = box.querySelector(".ph");
-    if (ph) {
-      ph.addEventListener("click", load);
-      ph.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); load(); }
-      });
-    }
-  });
+    var closeMedia = function () {
+      mm.classList.remove("open"); mm.setAttribute("aria-hidden", "true");
+      mmFrame.innerHTML = ""; // stop playback
+    };
+    mm.addEventListener("click", function (e) {
+      if (e.target === mm || e.target.closest(".mm-close")) closeMedia();
+    });
 
-  /* ---------- lightbox (gallery + hero cards) ---------- */
-  var lb = document.querySelector(".lightbox");
-  if (lb) {
-    var lbImg = lb.querySelector("img");
-    var open = function (src, alt) {
-      lbImg.src = src; lbImg.alt = alt || "";
-      lb.classList.add("open"); lb.setAttribute("aria-hidden", "false");
-    };
-    var close = function () { lb.classList.remove("open"); lb.setAttribute("aria-hidden", "true"); };
-    document.querySelectorAll("[data-lightbox]").forEach(function (el) {
-      el.addEventListener("click", function () {
-        var img = el.querySelector("img") || el;
-        open(img.getAttribute("src") || el.getAttribute("data-lightbox"), img.getAttribute("alt"));
-      });
+    embeds.forEach(function (box) {
+      var go = function () { openMedia(box.getAttribute("data-src"), box.getAttribute("data-title")); };
+      var ph = box.querySelector(".ph");
+      if (ph) {
+        ph.addEventListener("click", go);
+        ph.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+        });
+      }
     });
-    lb.addEventListener("click", function (e) {
-      if (e.target === lb || e.target.closest(".lb-close")) close();
-    });
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+
+    var closeMediaRef = closeMedia;
   }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLb(); if (mm) mm.classList.remove("open"), (mm.querySelector(".mm-frame").innerHTML = ""); }
+  });
 
   /* ---------- scroll reveal ---------- */
   var reveals = document.querySelectorAll(".reveal");

@@ -23,11 +23,8 @@ const EMOTES = [
   'thinking', 'nerd', 'aegis_2017', 'heart',
 ];
 
-// internal item names (from dotaconstants build/items.json keys)
-const ITEMS = [
-  'blink', 'power_treads', 'ultimate_scepter', 'aegis', 'rapier',
-  'magic_wand', 'bottle', 'arcane_boots', 'black_king_bar', 'aghanims_shard',
-];
+// internal item names (from dotaconstants build/items.json keys) — blink is the favicon
+const ITEMS = ['blink'];
 
 const PHOTOS = [
   ['https://e-portofolio-psi.vercel.app/assets/images/foto-anda.png', 'assets/img/foto-rifqi.png'],
